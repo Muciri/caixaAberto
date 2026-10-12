@@ -23,4 +23,14 @@ router.get('/resumo/mensal', authenticate, loadContext, transactionController.mo
 // Ex.: GET /api/lancamentos/123
 router.get('/:id', authenticate, loadContext, transactionController.getOne);
 
+// Atualizar lançamento financeiro
+// Ex.: PUT /api/lancamentos/123
+router.put(
+  '/:id',
+  authenticate,
+  loadContext,
+  requireRole('TESOUREIRO'),
+  transactionController.updateOne,
+);
+
 export default router;
