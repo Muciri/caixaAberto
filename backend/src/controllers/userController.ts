@@ -6,6 +6,12 @@ import { getContexto } from '../middlewares/load-context.js';
 import * as membershipRepository from '../repositories/membershipRepository.js';
 import userRepository from '../repositories/userRepository.js';
 
+type AuthenticatedRequest = Request & {
+  user?: {
+    id: string | number | bigint;
+  };
+};
+
 function serializeUser(user: User) {
   return {
     id: user.id.toString(),
@@ -239,10 +245,68 @@ async function deleteUser(req: Request, res: Response) {
   }
 }
 
+// O usuario autenticado e identificado pelo token.
+// Nao depende de X-Organizacao-Id nem de getContexto().
+async function getMyOrganizations(req: /*Request*/ AuthenticatedRequest, res: Response) {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({
+        erro: 'Usuário não autenticado',
+      });
+    }
+
+    let usuarioId: bigint;
+
+    try {
+      const id = String(req.user.id);
+
+      if (!/^[1-9]\d*$/.test(id)) {
+        throw new Error('ID inválido');
+      }
+
+      usuarioId = BigInt(id);
+    } catch {
+      return res.status(401).json({
+        erro: 'Identificador do usuário autenticado inválido',
+      });
+    }
+
+    const memberships =
+      await userRepository.findOrganizationsByUser(usuarioId);
+
+    const dados = memberships.map((membership) => ({
+      vinculoId: membership.id.toString(),
+      papel: membership.role,
+      dataVinculo: membership.linkedAt.toISOString().slice(0, 10),
+      organizacao: {
+        id: membership.organization.id.toString(),
+        nome: membership.organization.name,
+        descricao: membership.organization.description,
+        inicioGestao:
+          membership.organization.managementStart.toISOString().slice(0, 10),
+        fimGestao:
+          membership.organization.managementEnd.toISOString().slice(0, 10),
+        linkPublico: membership.organization.publicLink,
+        transparenciaAtiva:
+          membership.organization.transparencyActive,
+      },
+    }));
+
+    return res.status(200).json({ dados });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      erro: 'Erro ao buscar organizações do usuário',
+    });
+  }
+}
+
 export default {
   getUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
+  getMyOrganizations,
 };

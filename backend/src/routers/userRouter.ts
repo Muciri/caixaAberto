@@ -11,6 +11,10 @@ router.use(authenticate, loadContext);
 router.get('/', userController.getUsers);
 router.get('/:id', userController.getUserById);
 
+// Nao exige organizacao selecionada.
+// O usuario recebe a lista das organizacoes em que tem vinculo ativo.
+router.get('/me/organizacoes', userController.getMyOrganizations);
+
 // Escrita sobre contas: restrita ao TESOUREIRO da organizacao.
 router.post('/', requireRole('TESOUREIRO'), userController.createUser);
 router.put('/:id', requireRole('TESOUREIRO'), userController.updateUser);
