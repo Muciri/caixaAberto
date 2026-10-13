@@ -99,3 +99,39 @@ export async function reactivateMembership(
     select: memberSelection,
   });
 }
+
+/**
+ * Altera o papel de um vínculo ativo dentro da organização indicada.
+ *
+ * Retorna null se o vínculo não existir nessa organização,
+ * estiver inativo ou deixar de corresponder aos critérios da atualização.
+ */
+export async function updateActiveMemberRole(
+  id: bigint,
+  organizationId: bigint,
+  role: Role,
+): Promise<MemberRecord | null> {
+  const { count } = await prisma.membership.updateMany({
+    where: {
+      id,
+      organizationId,
+      active: true,
+    },
+    data: {
+      role,
+    },
+  });
+
+  if (count === 0) {
+    return null;
+  }
+
+  return prisma.membership.findFirst({
+    where: {
+      id,
+      organizationId,
+      active: true,
+    },
+    select: memberSelection,
+  });
+}

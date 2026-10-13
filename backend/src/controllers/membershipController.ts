@@ -12,6 +12,16 @@ const addMemberBodySchema = z
   })
   .strict();
 
+const updateMemberRoleParamsSchema = z.object({
+  id: z.string().regex(/^[1-9]\d*$/),
+});
+
+const updateMemberRoleBodySchema = z
+  .object({
+    papel: z.enum(['TESOUREIRO', 'CONSULTOR']),
+  })
+  .strict();
+
 export async function listMembers(
   request: Request,
   response: Response,
@@ -38,6 +48,32 @@ export async function addMember(
       body.email,
     );
     response.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * PUT /membros/:id/papel
+ *
+ * Body: { "papel": "TESOUREIRO" | "CONSULTOR" }
+ */
+export async function updateMemberRole(
+  request: Request,
+  response: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const params = updateMemberRoleParamsSchema.parse(request.params);
+    const body = updateMemberRoleBodySchema.parse(request.body);
+
+    const result = await membershipService.changeMemberRole(
+      getContexto(request).organizacaoId,
+      BigInt(params.id),
+      body.papel,
+    );
+
+    response.status(200).json(result);
   } catch (error) {
     next(error);
   }
