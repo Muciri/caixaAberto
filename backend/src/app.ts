@@ -88,7 +88,7 @@ export function createApp() {
   app.use('/relatorios', reportRouter);
   app.use('/transactions', transactionRouter);
   app.use('/transparency', transparencyRouter);
-  app.use('/membros', membershipRouter);  
+  app.use('/membros', membershipRouter);
 
   app.use((_request, _response, next) => {
     next(new AppError(404, 'Rota não encontrada'));

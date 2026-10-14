@@ -118,12 +118,11 @@ export async function changeMemberRole(
   membershipId: bigint,
   role: Role,
 ): Promise<MemberResponse> {
-  const updatedMember =
-    await membershipRepository.updateActiveMemberRole(
-      membershipId,
-      organizationId,
-      role,
-    );
+  const updatedMember = await membershipRepository.updateActiveMemberRole(
+    membershipId,
+    organizationId,
+    role,
+  );
 
   if (!updatedMember) {
     throw new AppError(404, MEMBER_NOT_FOUND);
