@@ -1,9 +1,12 @@
 import type { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 
+import { roles } from '../domain/auth-context.js';
+import { identifierSchema } from '../schemas/identifier.js';
 import { getContexto } from '../middlewares/load-context.js';
 import * as membershipService from '../services/membershipService.js';
 
+// aaaa
 const listMembersQuerySchema = z.object({}).strict();
 
 const addMemberBodySchema = z
@@ -12,16 +15,20 @@ const addMemberBodySchema = z
   })
   .strict();
 
-const updateMemberRoleParamsSchema = z.object({
-  id: z.string().regex(/^[1-9]\d*$/),
-});
+// const updateMemberRoleParamsSchema = z.object({
+//   id: z.string().regex(/^[1-9]\d*$/),
+// });
+
+// bbbb
+const updateMemberRoleParamsSchema = z.object({ id: identifierSchema }).strict();
 
 const updateMemberRoleBodySchema = z
   .object({
-    papel: z.enum(['TESOUREIRO', 'CONSULTOR']),
+    papel: z.enum(roles),
   })
   .strict();
 
+  // aaaaaa
 export async function listMembers(
   request: Request,
   response: Response,
@@ -52,6 +59,7 @@ export async function addMember(
     next(error);
   }
 }
+// bbbbbbb
 
 /**
  * PUT /membros/:id/papel
@@ -69,7 +77,7 @@ export async function updateMemberRole(
 
     const result = await membershipService.changeMemberRole(
       getContexto(request).organizacaoId,
-      BigInt(params.id),
+      params.id,
       body.papel,
     );
 

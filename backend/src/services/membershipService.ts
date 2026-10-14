@@ -118,11 +118,22 @@ export async function changeMemberRole(
   membershipId: bigint,
   role: Role,
 ): Promise<MemberResponse> {
-  const updatedMember = await membershipRepository.updateActiveMemberRole(
-    membershipId,
-    organizationId,
-    role,
-  );
+  let updatedMember: MemberRecord | null;
+  try {
+    updatedMember = await membershipRepository.updateActiveMemberRole(
+      membershipId,
+      organizationId,
+      role,
+    );
+  } catch (error) {
+    if (error instanceof membershipRepository.LastActiveTreasurerError) {
+      throw new AppError(409, error.message);
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
+      throw new AppError(409, 'Conflito ao alterar o papel. Tente novamente.');
+    }
+    throw error;
+  }
 
   if (!updatedMember) {
     throw new AppError(404, MEMBER_NOT_FOUND);

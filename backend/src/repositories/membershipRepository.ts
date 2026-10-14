@@ -106,32 +106,45 @@ export async function reactivateMembership(
  * Retorna null se o vínculo não existir nessa organização,
  * estiver inativo ou deixar de corresponder aos critérios da atualização.
  */
+export class LastActiveTreasurerError extends Error {
+  constructor() {
+    super('A organização precisa manter ao menos um tesoureiro ativo');
+    this.name = 'LastActiveTreasurerError';
+  }
+}
+
 export async function updateActiveMemberRole(
   id: bigint,
   organizationId: bigint,
   role: Role,
 ): Promise<MemberRecord | null> {
-  const { count } = await prisma.membership.updateMany({
-    where: {
-      id,
-      organizationId,
-      active: true,
-    },
-    data: {
-      role,
-    },
-  });
+  return prisma.$transaction(
+    async (transaction) => {
+      const current = await transaction.membership.findFirst({
+        where: { id, organizationId, active: true },
+        select: { role: true },
+      });
 
-  if (count === 0) {
-    return null;
-  }
+      if (!current) return null;
 
-  return prisma.membership.findFirst({
-    where: {
-      id,
-      organizationId,
-      active: true,
+      if (current.role === 'TESOUREIRO' && role === 'CONSULTOR') {
+        const activeTreasurers = await transaction.membership.count({
+          where: { organizationId, active: true, role: 'TESOUREIRO' },
+        });
+        if (activeTreasurers <= 1) throw new LastActiveTreasurerError();
+      }
+
+      const { count } = await transaction.membership.updateMany({
+        where: { id, organizationId, active: true, role: current.role },
+        data: { role },
+      });
+      if (count === 0) return null;
+
+      return transaction.membership.findFirst({
+        where: { id, organizationId, active: true },
+        select: memberSelection,
+      });
     },
-    select: memberSelection,
-  });
+    { isolationLevel: 'Serializable' },
+  );
 }
