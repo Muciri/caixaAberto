@@ -7,11 +7,9 @@ import { AppError } from '../errors/app-error.js';
 import * as organizationRepository from '../repositories/organizationRepository.js';
 
 const INVALID_DATE = 'Data inválida. Utilize o formato YYYY-MM-DD.';
-const INVALID_PERIOD =
-  'A data inicial da gestão deve ser anterior ou igual à data final.';
+const INVALID_PERIOD = 'A data inicial da gestão deve ser anterior ou igual à data final.';
 const ORGANIZATION_NOT_FOUND = 'Organização não encontrada.';
-const INACTIVE_CREATOR =
-  'Somente um usuário ativo pode criar uma organização.';
+const INACTIVE_CREATOR = 'Somente um usuário ativo pode criar uma organização.';
 
 type CreateOrganizationInput = {
   name: string;
@@ -35,10 +33,7 @@ function parseDateOnly(value: string): Date {
 
   const date = new Date(`${value}T00:00:00.000Z`);
 
-  if (
-    Number.isNaN(date.getTime()) ||
-    date.toISOString().slice(0, 10) !== value
-  ) {
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
     throw new AppError(400, INVALID_DATE);
   }
 
@@ -71,12 +66,8 @@ function validatePeriod(start: Date, end: Date): void {
   }
 }
 
-export async function createOrganization(
-  input: CreateOrganizationInput,
-) {
-  const creator = await organizationRepository.findActiveUserById(
-    input.creatorUserId,
-  );
+export async function createOrganization(input: CreateOrganizationInput) {
+  const creator = await organizationRepository.findActiveUserById(input.creatorUserId);
 
   if (!creator) {
     throw new AppError(401, INACTIVE_CREATOR);
@@ -107,10 +98,7 @@ export async function createOrganization(
   };
 }
 
-export async function updateOrganization(
-  organizationId: bigint,
-  input: UpdateOrganizationInput,
-) {
+export async function updateOrganization(organizationId: bigint, input: UpdateOrganizationInput) {
   const current = await organizationRepository.findById(organizationId);
 
   if (!current) {
@@ -123,9 +111,7 @@ export async function updateOrganization(
       : current.managementStart;
 
   const managementEnd =
-    input.managementEnd !== undefined
-      ? parseDateOnly(input.managementEnd)
-      : current.managementEnd;
+    input.managementEnd !== undefined ? parseDateOnly(input.managementEnd) : current.managementEnd;
 
   validatePeriod(managementStart, managementEnd);
 
@@ -147,10 +133,7 @@ export async function updateOrganization(
     data.managementEnd = managementEnd;
   }
 
-  const updated = await organizationRepository.updateById(
-    organizationId,
-    data,
-  );
+  const updated = await organizationRepository.updateById(organizationId, data);
 
   return formatOrganization(updated);
 }

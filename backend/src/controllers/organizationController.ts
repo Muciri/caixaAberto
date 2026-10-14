@@ -10,11 +10,9 @@ type AuthenticatedRequest = Request & {
   };
 };
 
-const dateOnlySchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, {
-    error: 'Informe uma data no formato YYYY-MM-DD.',
-  });
+const dateOnlySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+  error: 'Informe uma data no formato YYYY-MM-DD.',
+});
 
 const createOrganizationBodySchema = z
   .object({
@@ -87,10 +85,7 @@ export async function updateOrganization(
     const params = updateOrganizationParamsSchema.parse(request.params);
     const body = updateOrganizationBodySchema.parse(request.body);
 
-    const result = await organizationService.updateOrganization(
-      BigInt(params.id),
-      body,
-    );
+    const result = await organizationService.updateOrganization(BigInt(params.id), body);
 
     response.status(200).json(result);
   } catch (error) {

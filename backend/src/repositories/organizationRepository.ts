@@ -68,9 +68,7 @@ export async function findActiveUserById(id: bigint) {
  * Cria a organização e o vínculo do criador como TESOUREIRO
  * na mesma transação do banco.
  */
-export async function createWithTreasurer(
-  data: CreateOrganizationData,
-) {
+export async function createWithTreasurer(data: CreateOrganizationData) {
   return prisma.$transaction(async (tx) => {
     const organization = await tx.organization.create({
       data: {
@@ -107,10 +105,7 @@ export async function createWithTreasurer(
   });
 }
 
-export async function updateById(
-  id: bigint,
-  data: UpdateOrganizationData,
-) {
+export async function updateById(id: bigint, data: UpdateOrganizationData) {
   return prisma.organization.update({
     where: { id },
     data,

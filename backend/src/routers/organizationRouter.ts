@@ -59,11 +59,7 @@ router.post(
 
 // Criar organização.
 // Não utiliza loadContext: o usuário ainda pode não ter uma organização selecionada.
-router.post(
-  '/',
-  authenticate,
-  organizationController.createOrganization,
-);
+router.post('/', authenticate, organizationController.createOrganization);
 
 // Atualizar os dados da organização.
 // Primeiro confere a organização do caminho; depois, o papel do usuário.
