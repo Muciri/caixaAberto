@@ -271,8 +271,7 @@ async function getMyOrganizations(req: /*Request*/ AuthenticatedRequest, res: Re
       });
     }
 
-    const memberships =
-      await userRepository.findOrganizationsByUser(usuarioId);
+    const memberships = await userRepository.findOrganizationsByUser(usuarioId);
 
     const dados = memberships.map((membership) => ({
       vinculoId: membership.id.toString(),
@@ -282,13 +281,10 @@ async function getMyOrganizations(req: /*Request*/ AuthenticatedRequest, res: Re
         id: membership.organization.id.toString(),
         nome: membership.organization.name,
         descricao: membership.organization.description,
-        inicioGestao:
-          membership.organization.managementStart.toISOString().slice(0, 10),
-        fimGestao:
-          membership.organization.managementEnd.toISOString().slice(0, 10),
+        inicioGestao: membership.organization.managementStart.toISOString().slice(0, 10),
+        fimGestao: membership.organization.managementEnd.toISOString().slice(0, 10),
         linkPublico: membership.organization.publicLink,
-        transparenciaAtiva:
-          membership.organization.transparencyActive,
+        transparenciaAtiva: membership.organization.transparencyActive,
       },
     }));
 

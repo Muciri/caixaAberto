@@ -134,7 +134,6 @@ async function findOrganizationsByUser(userId: bigint) {
   });
 }
 
-
 export default {
   findAll,
   findAllByOrganization,
