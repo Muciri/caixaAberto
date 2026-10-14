@@ -5,15 +5,14 @@ import { loadContext, requireRole } from '../middlewares/load-context.js';
 
 const router = express.Router();
 
+// Esta consulta precisa funcionar antes de a pessoa escolher uma organização.
+router.get('/me/organizacoes', authenticate, userController.getMyOrganizations);
+
 router.use(authenticate, loadContext);
 
 // Leitura: qualquer membro com vinculo ativo enxerga os colegas da propria organizacao.
 router.get('/', userController.getUsers);
 router.get('/:id', userController.getUserById);
-
-// Nao exige organizacao selecionada.
-// O usuario recebe a lista das organizacoes em que tem vinculo ativo.
-router.get('/me/organizacoes', userController.getMyOrganizations);
 
 // Escrita sobre contas: restrita ao TESOUREIRO da organizacao.
 router.post('/', requireRole('TESOUREIRO'), userController.createUser);

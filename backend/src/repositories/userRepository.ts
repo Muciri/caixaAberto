@@ -105,10 +105,6 @@ async function findOrganizationsByUser(userId: bigint) {
     where: {
       userId,
       active: true,
-      organization: {
-        // Opcional: nao exige que a gestao esteja vigente.
-        // O vinculo ativo e o criterio de pertencimento.
-      },
     },
     select: {
       id: true,
