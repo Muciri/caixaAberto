@@ -6,9 +6,7 @@ import { createMembership, createOrganization, createUser } from '../factories/i
 import { createAuthorizationHeader } from '../helpers/auth.js';
 
 function listarOrganizacoes(authorization: string) {
-  return request(createApp())
-    .get('/users/me/organizacoes')
-    .set('Authorization', authorization);
+  return request(createApp()).get('/users/me/organizacoes').set('Authorization', authorization);
 }
 
 describe('organizações do usuário autenticado (US13)', () => {
@@ -35,9 +33,9 @@ describe('organizações do usuário autenticado (US13)', () => {
 
     const response = await listarOrganizacoes(createAuthorizationHeader(user));
     expect(response.status).toBe(200);
-    expect(response.body.dados.map((item: { organizacao: { id: string } }) => item.organizacao.id)).toEqual([
-      first.id.toString(), second.id.toString(),
-    ]);
+    expect(
+      response.body.dados.map((item: { organizacao: { id: string } }) => item.organizacao.id),
+    ).toEqual([first.id.toString(), second.id.toString()]);
   });
 
   it('retorna lista vazia quando o usuário não possui organizações', async () => {
@@ -51,8 +49,16 @@ describe('organizações do usuário autenticado (US13)', () => {
     const user = await createUser();
     const activeOrganization = await createOrganization({ name: 'Ativa' });
     const inactiveOrganization = await createOrganization({ name: 'Inativa' });
-    await createMembership({ userId: user.id, organizationId: activeOrganization.id, active: true });
-    await createMembership({ userId: user.id, organizationId: inactiveOrganization.id, active: false });
+    await createMembership({
+      userId: user.id,
+      organizationId: activeOrganization.id,
+      active: true,
+    });
+    await createMembership({
+      userId: user.id,
+      organizationId: inactiveOrganization.id,
+      active: false,
+    });
 
     const response = await listarOrganizacoes(createAuthorizationHeader(user));
     expect(response.status).toBe(200);

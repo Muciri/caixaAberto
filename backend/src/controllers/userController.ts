@@ -9,7 +9,6 @@ import { getContexto } from '../middlewares/load-context.js';
 import * as membershipRepository from '../repositories/membershipRepository.js';
 import userRepository from '../repositories/userRepository.js';
 
-
 function serializeUser(user: User) {
   return {
     id: user.id.toString(),
