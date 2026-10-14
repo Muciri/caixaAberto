@@ -85,7 +85,7 @@ export function createApp() {
   app.use('/lancamentos', transactionReversalRouter);
   app.use('/extrato', statementRouter);
   app.use('/relatorios', reportRouter);
-  app.use('/transactions', transactionRouter);
+  app.use('/lancamentos', transactionRouter);
   app.use('/transparency', transparencyRouter);
 
   app.use((_request, _response, next) => {

@@ -192,8 +192,6 @@ export async function updateOne(req: Request, res: Response) {
       'description',
       'source',
       'recipient',
-      'type',
-      'tipo',
     ]);
 
     const unsupportedFields = Object.keys(body).filter((field) => !editableFields.has(field));
@@ -211,16 +209,6 @@ export async function updateOne(req: Request, res: Response) {
       });
     }
 
-    if (
-      hasOwn(body, 'type') &&
-      hasOwn(body, 'tipo') &&
-      String(body.type).trim().toUpperCase() !== String(body.tipo).trim().toUpperCase()
-    ) {
-      return res.status(400).json({
-        erro: 'Envie apenas um tipo de lançamento ou use valores iguais em type e tipo.',
-      });
-    }
-
     // A consulta já restringe o lançamento à organização selecionada.
     const currentTransaction = await transactionRepository.findTransactionById(id, organizationId);
 
@@ -233,7 +221,7 @@ export async function updateOne(req: Request, res: Response) {
     // Lançamentos estornados não podem ser modificados.
     if (currentTransaction.reversedAt || currentTransaction.status === 'ESTORNADO') {
       return res.status(409).json({
-        erro: 'Não é possível editar um lançamento estornado.',
+        erro: 'Lançamento estornado não pode ser editado. Registre um novo lançamento com os dados corretos.',
       });
     }
 
@@ -299,45 +287,27 @@ export async function updateOne(req: Request, res: Response) {
         typeof body.recipient === 'string' && body.recipient.trim() ? body.recipient.trim() : null;
     }
 
-    const hasType = hasOwn(body, 'type');
-    const hasTipo = hasOwn(body, 'tipo');
+    const type = currentTransaction.type;
 
-    const rawType = hasTipo ? body.tipo : hasType ? body.type : currentTransaction.type;
+    if (hasOwn(body, 'date')) {
+      const organization = await transactionRepository.getOrganizationById(organizationId);
 
-    if (typeof rawType !== 'string') {
-      return res.status(400).json({
-        erro: 'type deve ser ENTRADA ou SAIDA.',
-      });
-    }
+      if (!organization) {
+        return res.status(404).json({
+          erro: 'Organização não encontrada.',
+        });
+      }
 
-    const normalizedType = rawType.trim().toUpperCase();
-
-    if (!TRANSACTION_TYPES.includes(normalizedType as TransactionType)) {
-      return res.status(400).json({
-        erro: 'type deve ser ENTRADA ou SAIDA.',
-      });
-    }
-
-    const type = normalizedType as TransactionType;
-
-    // Revalida o período de gestão mesmo quando date não foi enviado.
-    const organization = await transactionRepository.getOrganizationById(organizationId);
-
-    if (!organization) {
-      return res.status(404).json({
-        erro: 'Organização não encontrada.',
-      });
-    }
-
-    if (
-      !organization.managementStart ||
-      !organization.managementEnd ||
-      date < organization.managementStart ||
-      date > organization.managementEnd
-    ) {
-      return res.status(400).json({
-        erro: 'A data do lançamento deve estar dentro do período de gestão da organização.',
-      });
+      if (
+        !organization.managementStart ||
+        !organization.managementEnd ||
+        date < organization.managementStart ||
+        date > organization.managementEnd
+      ) {
+        return res.status(400).json({
+          erro: 'A data do lançamento deve estar dentro do período de gestão da organização.',
+        });
+      }
     }
 
     /*
@@ -378,7 +348,7 @@ export async function updateOne(req: Request, res: Response) {
 
       if (latestTransaction.reversedAt || latestTransaction.status === 'ESTORNADO') {
         return res.status(409).json({
-          erro: 'Não é possível editar um lançamento estornado.',
+          erro: 'Lançamento estornado não pode ser editado. Registre um novo lançamento com os dados corretos.',
         });
       }
 
