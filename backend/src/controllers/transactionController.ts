@@ -52,17 +52,10 @@ function serialize(value: unknown): unknown {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    !Array.isArray(value)
-  );
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function hasOwn(
-  object: Record<string, unknown>,
-  property: string,
-): boolean {
+function hasOwn(object: Record<string, unknown>, property: string): boolean {
   return Object.prototype.hasOwnProperty.call(object, property);
 }
 
@@ -203,9 +196,7 @@ export async function updateOne(req: Request, res: Response) {
       'tipo',
     ]);
 
-    const unsupportedFields = Object.keys(body).filter(
-      (field) => !editableFields.has(field),
-    );
+    const unsupportedFields = Object.keys(body).filter((field) => !editableFields.has(field));
 
     if (unsupportedFields.length > 0) {
       return res.status(400).json({
@@ -223,8 +214,7 @@ export async function updateOne(req: Request, res: Response) {
     if (
       hasOwn(body, 'type') &&
       hasOwn(body, 'tipo') &&
-      String(body.type).trim().toUpperCase() !==
-        String(body.tipo).trim().toUpperCase()
+      String(body.type).trim().toUpperCase() !== String(body.tipo).trim().toUpperCase()
     ) {
       return res.status(400).json({
         erro: 'Envie apenas um tipo de lançamento ou use valores iguais em type e tipo.',
@@ -232,11 +222,7 @@ export async function updateOne(req: Request, res: Response) {
     }
 
     // A consulta já restringe o lançamento à organização selecionada.
-    const currentTransaction =
-      await transactionRepository.findTransactionById(
-        id,
-        organizationId,
-      );
+    const currentTransaction = await transactionRepository.findTransactionById(id, organizationId);
 
     if (!currentTransaction) {
       return res.status(404).json({
@@ -245,10 +231,7 @@ export async function updateOne(req: Request, res: Response) {
     }
 
     // Lançamentos estornados não podem ser modificados.
-    if (
-      currentTransaction.reversedAt ||
-      currentTransaction.status === 'ESTORNADO'
-    ) {
+    if (currentTransaction.reversedAt || currentTransaction.status === 'ESTORNADO') {
       return res.status(409).json({
         erro: 'Não é possível editar um lançamento estornado.',
       });
@@ -268,9 +251,7 @@ export async function updateOne(req: Request, res: Response) {
       ? parseMoney(body.amount)
       : parseMoney(currentTransaction.amount);
 
-    const date = hasOwn(body, 'date')
-      ? parseDateOnly(body.date)
-      : currentTransaction.date;
+    const date = hasOwn(body, 'date') ? parseDateOnly(body.date) : currentTransaction.date;
 
     if (!categoryId || !amount || !date) {
       return res.status(400).json({
@@ -298,45 +279,30 @@ export async function updateOne(req: Request, res: Response) {
     let recipient: string | null = currentTransaction.recipient;
 
     if (hasOwn(body, 'source')) {
-      if (
-        body.source !== null &&
-        typeof body.source !== 'string'
-      ) {
+      if (body.source !== null && typeof body.source !== 'string') {
         return res.status(400).json({
           erro: 'source deve ser texto ou null.',
         });
       }
 
-      source =
-        typeof body.source === 'string' && body.source.trim()
-          ? body.source.trim()
-          : null;
+      source = typeof body.source === 'string' && body.source.trim() ? body.source.trim() : null;
     }
 
     if (hasOwn(body, 'recipient')) {
-      if (
-        body.recipient !== null &&
-        typeof body.recipient !== 'string'
-      ) {
+      if (body.recipient !== null && typeof body.recipient !== 'string') {
         return res.status(400).json({
           erro: 'recipient deve ser texto ou null.',
         });
       }
 
       recipient =
-        typeof body.recipient === 'string' && body.recipient.trim()
-          ? body.recipient.trim()
-          : null;
+        typeof body.recipient === 'string' && body.recipient.trim() ? body.recipient.trim() : null;
     }
 
     const hasType = hasOwn(body, 'type');
     const hasTipo = hasOwn(body, 'tipo');
 
-    const rawType = hasTipo
-      ? body.tipo
-      : hasType
-        ? body.type
-        : currentTransaction.type;
+    const rawType = hasTipo ? body.tipo : hasType ? body.type : currentTransaction.type;
 
     if (typeof rawType !== 'string') {
       return res.status(400).json({
@@ -355,8 +321,7 @@ export async function updateOne(req: Request, res: Response) {
     const type = normalizedType as TransactionType;
 
     // Revalida o período de gestão mesmo quando date não foi enviado.
-    const organization =
-      await transactionRepository.getOrganizationById(organizationId);
+    const organization = await transactionRepository.getOrganizationById(organizationId);
 
     if (!organization) {
       return res.status(404).json({
@@ -379,12 +344,11 @@ export async function updateOne(req: Request, res: Response) {
      * Revalida a categoria usando o tipo final.
      * Isso também cobre o caso em que categoryId e type são alterados juntos.
      */
-    const category =
-      await transactionRepository.getCategoryForOrganization(
-        categoryId,
-        organizationId,
-        type,
-      );
+    const category = await transactionRepository.getCategoryForOrganization(
+      categoryId,
+      organizationId,
+      type,
+    );
 
     if (!category) {
       return res.status(400).json({
@@ -392,28 +356,19 @@ export async function updateOne(req: Request, res: Response) {
       });
     }
 
-    const updatedTransaction =
-      await transactionRepository.updateTransaction(
-        id,
-        organizationId,
-        {
-          categoryId,
-          amount,
-          date,
-          type,
-          description,
-          source,
-          recipient,
-        },
-      );
+    const updatedTransaction = await transactionRepository.updateTransaction(id, organizationId, {
+      categoryId,
+      amount,
+      date,
+      type,
+      description,
+      source,
+      recipient,
+    });
 
     if (!updatedTransaction) {
       // Verifica se o lançamento foi removido ou estornado durante a operação.
-      const latestTransaction =
-        await transactionRepository.findTransactionById(
-          id,
-          organizationId,
-        );
+      const latestTransaction = await transactionRepository.findTransactionById(id, organizationId);
 
       if (!latestTransaction) {
         return res.status(404).json({
@@ -421,10 +376,7 @@ export async function updateOne(req: Request, res: Response) {
         });
       }
 
-      if (
-        latestTransaction.reversedAt ||
-        latestTransaction.status === 'ESTORNADO'
-      ) {
+      if (latestTransaction.reversedAt || latestTransaction.status === 'ESTORNADO') {
         return res.status(409).json({
           erro: 'Não é possível editar um lançamento estornado.',
         });
