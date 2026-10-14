@@ -18,8 +18,16 @@ async function setup() {
   const organization = await createOrganization();
   await createMembership({ userId: responsavel.id, organizationId: organization.id });
   await createMembership({ userId: outroTesoureiro.id, organizationId: organization.id });
-  const categoriaEntrada = await createCategory({ organizationId: organization.id, name: 'Doações', type: 'ENTRADA' });
-  const categoriaSaida = await createCategory({ organizationId: organization.id, name: 'Material', type: 'SAIDA' });
+  const categoriaEntrada = await createCategory({
+    organizationId: organization.id,
+    name: 'Doações',
+    type: 'ENTRADA',
+  });
+  const categoriaSaida = await createCategory({
+    organizationId: organization.id,
+    name: 'Material',
+    type: 'SAIDA',
+  });
   const transaction = await createTransaction({
     organizationId: organization.id,
     userId: responsavel.id,
@@ -28,7 +36,11 @@ async function setup() {
     source: 'Doador original',
   });
   return {
-    responsavel, organization, categoriaEntrada, categoriaSaida, transaction,
+    responsavel,
+    organization,
+    categoriaEntrada,
+    categoriaSaida,
+    transaction,
     authorization: createAuthorizationHeader(outroTesoureiro),
   };
 }
@@ -51,7 +63,10 @@ describe('correção de lançamento (US20)', () => {
 
   it('responde 409 para lançamento estornado e orienta registrar outro', async () => {
     const ctx = await setup();
-    await prisma.transaction.update({ where: { id: ctx.transaction.id }, data: { status: 'ESTORNADO', reversedAt: new Date() } });
+    await prisma.transaction.update({
+      where: { id: ctx.transaction.id },
+      data: { status: 'ESTORNADO', reversedAt: new Date() },
+    });
     const response = await request(createApp())
       .put(`/lancamentos/${ctx.transaction.id}`)
       .set('Authorization', ctx.authorization)
