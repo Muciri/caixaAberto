@@ -49,7 +49,7 @@ describe('correção de lançamento (US20)', () => {
   it('permite a outro tesoureiro corrigir descrição e categoria preservando responsável e organização', async () => {
     const ctx = await setup();
     const response = await request(createApp())
-      .put(`/lancamentos/${ctx.transaction.id}`)
+      .put(`/transactions/${ctx.transaction.id}`)
       .set('Authorization', ctx.authorization)
       .send({ description: 'Doação corrigida', categoryId: ctx.categoriaEntrada.id.toString() });
 
@@ -68,7 +68,7 @@ describe('correção de lançamento (US20)', () => {
       data: { status: 'ESTORNADO', reversedAt: new Date() },
     });
     const response = await request(createApp())
-      .put(`/lancamentos/${ctx.transaction.id}`)
+      .put(`/transactions/${ctx.transaction.id}`)
       .set('Authorization', ctx.authorization)
       .send({ description: 'Correção' });
 
@@ -79,7 +79,7 @@ describe('correção de lançamento (US20)', () => {
   it('rejeita alteração do tipo', async () => {
     const ctx = await setup();
     const response = await request(createApp())
-      .put(`/lancamentos/${ctx.transaction.id}`)
+      .put(`/transactions/${ctx.transaction.id}`)
       .set('Authorization', ctx.authorization)
       .send({ tipo: 'SAIDA', categoryId: ctx.categoriaSaida.id.toString() });
     expect(response.status).toBe(400);
