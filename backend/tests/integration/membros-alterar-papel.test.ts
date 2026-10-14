@@ -9,14 +9,32 @@ import { createAuthorizationHeader } from '../helpers/auth.js';
 async function setup(role: 'TESOUREIRO' | 'CONSULTOR' = 'TESOUREIRO') {
   const actor = await createUser();
   const organization = await createOrganization();
-  const actorMembership = await createMembership({ userId: actor.id, organizationId: organization.id, role });
+  const actorMembership = await createMembership({
+    userId: actor.id,
+    organizationId: organization.id,
+    role,
+  });
   const member = await createUser();
-  const membership = await createMembership({ userId: member.id, organizationId: organization.id, role: 'CONSULTOR' });
-  return { actor, organization, actorMembership, member, membership, authorization: createAuthorizationHeader(actor) };
+  const membership = await createMembership({
+    userId: member.id,
+    organizationId: organization.id,
+    role: 'CONSULTOR',
+  });
+  return {
+    actor,
+    organization,
+    actorMembership,
+    member,
+    membership,
+    authorization: createAuthorizationHeader(actor),
+  };
 }
 
 function alterar(id: bigint | string, authorization: string, body: object) {
-  return request(createApp()).put(`/membros/${id.toString()}/papel`).set('Authorization', authorization).send(body);
+  return request(createApp())
+    .put(`/membros/${id.toString()}/papel`)
+    .set('Authorization', authorization)
+    .send(body);
 }
 
 describe('alterar papel de membro (US10)', () => {
@@ -36,10 +54,14 @@ describe('alterar papel de membro (US10)', () => {
 
   it('impede rebaixar o último tesoureiro ativo', async () => {
     const ctx = await setup();
-    const lastTreasurer = await alterar(ctx.actorMembership.id, ctx.authorization, { papel: 'CONSULTOR' });
+    const lastTreasurer = await alterar(ctx.actorMembership.id, ctx.authorization, {
+      papel: 'CONSULTOR',
+    });
     expect(lastTreasurer.status).toBe(409);
 
-    const addTreasurer = await alterar(ctx.membership.id, ctx.authorization, { papel: 'TESOUREIRO' });
+    const addTreasurer = await alterar(ctx.membership.id, ctx.authorization, {
+      papel: 'TESOUREIRO',
+    });
     expect(addTreasurer.status).toBe(200);
     const demote = await alterar(ctx.actorMembership.id, ctx.authorization, { papel: 'CONSULTOR' });
     expect(demote.status).toBe(200);
@@ -72,7 +94,11 @@ describe('alterar papel de membro (US10)', () => {
     const ctx = await setup();
     const otherOrganization = await createOrganization();
     const otherUser = await createUser();
-    const otherMembership = await createMembership({ userId: otherUser.id, organizationId: otherOrganization.id, role: 'CONSULTOR' });
+    const otherMembership = await createMembership({
+      userId: otherUser.id,
+      organizationId: otherOrganization.id,
+      role: 'CONSULTOR',
+    });
     const response = await alterar(otherMembership.id, ctx.authorization, { papel: 'TESOUREIRO' });
     expect(response.status).toBe(404);
   });
