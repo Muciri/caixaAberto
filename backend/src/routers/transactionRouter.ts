@@ -16,15 +16,15 @@ router.post(
 );
 
 // US29: Consultar resumo financeiro mensal
-// Ex.: GET /lancamentos/resumo/mensal?mes=2026-09
+// Ex.: GET /transactions/resumo/mensal?mes=2026-09
 router.get('/resumo/mensal', authenticate, loadContext, transactionController.monthlySummary);
 
 // US24: Visualizar detalhes do lançamento
-// Ex.: GET /lancamentos/123
+// Ex.: GET /transactions/123
 router.get('/:id', authenticate, loadContext, transactionController.getOne);
 
 // Atualizar lançamento financeiro
-// Ex.: PUT /lancamentos/123
+// Ex.: PUT /transactions/123
 router.put(
   '/:id',
   authenticate,

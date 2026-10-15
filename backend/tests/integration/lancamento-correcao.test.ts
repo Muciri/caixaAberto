@@ -23,6 +23,11 @@ async function setup() {
     name: 'Doações',
     type: 'ENTRADA',
   });
+  const outraCategoriaEntrada = await createCategory({
+    organizationId: organization.id,
+    name: 'Patrocínios',
+    type: 'ENTRADA',
+  });
   const categoriaSaida = await createCategory({
     organizationId: organization.id,
     name: 'Material',
@@ -39,6 +44,7 @@ async function setup() {
     responsavel,
     organization,
     categoriaEntrada,
+    outraCategoriaEntrada,
     categoriaSaida,
     transaction,
     authorization: createAuthorizationHeader(outroTesoureiro),
@@ -51,14 +57,21 @@ describe('correção de lançamento (US20)', () => {
     const response = await request(createApp())
       .put(`/transactions/${ctx.transaction.id}`)
       .set('Authorization', ctx.authorization)
-      .send({ description: 'Doação corrigida', categoryId: ctx.categoriaEntrada.id.toString() });
+      .send({
+        description: 'Doação corrigida',
+        categoryId: ctx.outraCategoriaEntrada.id.toString(),
+      });
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ description: 'Doação corrigida' });
+    expect(response.body).toMatchObject({
+      description: 'Doação corrigida',
+      categoryId: ctx.outraCategoriaEntrada.id.toString(),
+    });
     const saved = await prisma.transaction.findUniqueOrThrow({ where: { id: ctx.transaction.id } });
     expect(saved.userId).toBe(ctx.responsavel.id);
     expect(saved.organizationId).toBe(ctx.organization.id);
-    expect(saved.categoryId).toBe(ctx.categoriaEntrada.id);
+    expect(saved.categoryId).toBe(ctx.outraCategoriaEntrada.id);
+    expect(saved.description).toBe('Doação corrigida');
   });
 
   it('responde 409 para lançamento estornado e orienta registrar outro', async () => {

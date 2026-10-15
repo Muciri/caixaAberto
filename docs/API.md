@@ -486,6 +486,8 @@ Erros:
 - `404`: lançamento ausente ou pertencente a outra organização;
 - `409`: lançamento estornado ou conflito ao atualizar.
 
+Compatibilidade atual: responde em `PUT /transactions/:id`, recebe e devolve propriedades em inglês.
+
 ### `POST /lancamentos/{id}/comprovante`
 
 Exige autenticação e papel `TESOUREIRO`. O conteúdo é `multipart/form-data`, no campo `arquivo`.
