@@ -105,6 +105,19 @@ export async function createWithTreasurer(data: CreateOrganizationData) {
   });
 }
 
+export async function countTransactionsOutsidePeriod(
+  organizationId: bigint,
+  managementStart: Date,
+  managementEnd: Date,
+) {
+  return prisma.transaction.count({
+    where: {
+      organizationId,
+      OR: [{ date: { lt: managementStart } }, { date: { gt: managementEnd } }],
+    },
+  });
+}
+
 export async function updateById(id: bigint, data: UpdateOrganizationData) {
   return prisma.organization.update({
     where: { id },

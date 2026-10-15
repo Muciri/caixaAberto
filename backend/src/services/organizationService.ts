@@ -1,49 +1,33 @@
-import type {
-  //CreateOrganizationData,
-  UpdateOrganizationData,
-} from '../repositories/organizationRepository.js';
+import type { UpdateOrganizationData } from '../repositories/organizationRepository.js';
 import { formatCivilDate, todayCivilDate } from '../domain/civil-date.js';
 import { AppError } from '../errors/app-error.js';
 import * as organizationRepository from '../repositories/organizationRepository.js';
 
-const INVALID_DATE = 'Data inválida. Utilize o formato YYYY-MM-DD.';
 const INVALID_PERIOD = 'A data inicial da gestão deve ser anterior ou igual à data final.';
 const ORGANIZATION_NOT_FOUND = 'Organização não encontrada.';
 const INACTIVE_CREATOR = 'Somente um usuário ativo pode criar uma organização.';
+const TRANSACTIONS_OUTSIDE_PERIOD =
+  'Existem lançamentos fora do novo período de gestão. Ajuste o período para incluí-los.';
 
 type CreateOrganizationInput = {
   name: string;
   description: string;
-  managementStart: string;
-  managementEnd: string;
+  managementStart: Date;
+  managementEnd: Date;
   creatorUserId: bigint;
 };
 
 export type UpdateOrganizationInput = {
   name?: string;
   description?: string;
-  managementStart?: string;
-  managementEnd?: string;
+  managementStart?: Date;
+  managementEnd?: Date;
 };
-
-function parseDateOnly(value: string): Date {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new AppError(400, INVALID_DATE);
-  }
-
-  const date = new Date(`${value}T00:00:00.000Z`);
-
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
-    throw new AppError(400, INVALID_DATE);
-  }
-
-  return date;
-}
 
 function formatOrganization(organization: {
   id: bigint;
   name: string;
-  description: string | null;
+  description: string;
   managementStart: Date;
   managementEnd: Date;
   transparencyActive: boolean;
@@ -51,12 +35,12 @@ function formatOrganization(organization: {
 }) {
   return {
     id: organization.id.toString(),
-    name: organization.name,
-    description: organization.description,
-    managementStart: formatCivilDate(organization.managementStart),
-    managementEnd: formatCivilDate(organization.managementEnd),
-    transparencyActive: organization.transparencyActive,
-    publicLink: organization.publicLink,
+    nome: organization.name,
+    descricao: organization.description,
+    inicioGestao: formatCivilDate(organization.managementStart),
+    fimGestao: formatCivilDate(organization.managementEnd),
+    linkPublico: organization.publicLink,
+    transparenciaAtiva: organization.transparencyActive,
   };
 }
 
@@ -73,16 +57,13 @@ export async function createOrganization(input: CreateOrganizationInput) {
     throw new AppError(401, INACTIVE_CREATOR);
   }
 
-  const managementStart = parseDateOnly(input.managementStart);
-  const managementEnd = parseDateOnly(input.managementEnd);
-
-  validatePeriod(managementStart, managementEnd);
+  validatePeriod(input.managementStart, input.managementEnd);
 
   const created = await organizationRepository.createWithTreasurer({
     name: input.name,
     description: input.description,
-    managementStart,
-    managementEnd,
+    managementStart: input.managementStart,
+    managementEnd: input.managementEnd,
     creatorUserId: input.creatorUserId,
     linkedAt: todayCivilDate(),
   });
@@ -105,15 +86,27 @@ export async function updateOrganization(organizationId: bigint, input: UpdateOr
     throw new AppError(404, ORGANIZATION_NOT_FOUND);
   }
 
-  const managementStart =
-    input.managementStart !== undefined
-      ? parseDateOnly(input.managementStart)
-      : current.managementStart;
-
-  const managementEnd =
-    input.managementEnd !== undefined ? parseDateOnly(input.managementEnd) : current.managementEnd;
+  const managementStart = input.managementStart ?? current.managementStart;
+  const managementEnd = input.managementEnd ?? current.managementEnd;
 
   validatePeriod(managementStart, managementEnd);
+
+  /*
+   * Lançamento nunca é apagado e precisa continuar dentro da gestão: fora dela ele não pode mais
+   * ser corrigido, porque a data é revalidada contra o período. Por isso o período só encolhe até
+   * o primeiro e o último lançamento, estornados inclusive.
+   */
+  if (input.managementStart !== undefined || input.managementEnd !== undefined) {
+    const outside = await organizationRepository.countTransactionsOutsidePeriod(
+      organizationId,
+      managementStart,
+      managementEnd,
+    );
+
+    if (outside > 0) {
+      throw new AppError(409, TRANSACTIONS_OUTSIDE_PERIOD);
+    }
+  }
 
   const data: UpdateOrganizationData = {};
 
