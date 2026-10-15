@@ -6,7 +6,6 @@ import { identifierSchema } from '../schemas/identifier.js';
 import { getContexto } from '../middlewares/load-context.js';
 import * as membershipService from '../services/membershipService.js';
 
-// aaaa
 const listMembersQuerySchema = z.object({}).strict();
 
 const addMemberBodySchema = z
@@ -15,11 +14,6 @@ const addMemberBodySchema = z
   })
   .strict();
 
-// const updateMemberRoleParamsSchema = z.object({
-//   id: z.string().regex(/^[1-9]\d*$/),
-// });
-
-// bbbb
 const updateMemberRoleParamsSchema = z.object({ id: identifierSchema }).strict();
 
 const updateMemberRoleBodySchema = z
@@ -28,7 +22,6 @@ const updateMemberRoleBodySchema = z
   })
   .strict();
 
-// aaaaaa
 export async function listMembers(
   request: Request,
   response: Response,
@@ -59,7 +52,6 @@ export async function addMember(
     next(error);
   }
 }
-// bbbbbbb
 
 /**
  * PUT /membros/:id/papel

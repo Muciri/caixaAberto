@@ -100,12 +100,6 @@ export async function reactivateMembership(
   });
 }
 
-/**
- * Altera o papel de um vínculo ativo dentro da organização indicada.
- *
- * Retorna null se o vínculo não existir nessa organização,
- * estiver inativo ou deixar de corresponder aos critérios da atualização.
- */
 export class LastActiveTreasurerError extends Error {
   constructor() {
     super('A organização precisa manter ao menos um tesoureiro ativo');
@@ -113,6 +107,12 @@ export class LastActiveTreasurerError extends Error {
   }
 }
 
+/**
+ * Altera o papel de um vínculo ativo dentro da organização indicada.
+ *
+ * Retorna null se o vínculo não existir nessa organização,
+ * estiver inativo ou deixar de corresponder aos critérios da atualização.
+ */
 export async function updateActiveMemberRole(
   id: bigint,
   organizationId: bigint,
